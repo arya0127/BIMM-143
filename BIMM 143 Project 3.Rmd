@@ -1,0 +1,83 @@
+---
+title: "Sodium Channel Evolution Across Organisms"
+author: "Arya Natarajan"
+date: "3/7/2021"
+output: html_document
+---
+Scientific Question: How do voltage-gated sodium channels differ between electric fish and other organisms? 
+
+Sodium channels are critical to many functionalities of an organism, including neuronal communication and muscular function. In electric fish, sodium channels are upregulated in the electric organ cells (electrocytes) so as to help conduct electricity (Traeger et al., 2017). So, have sodium channels been conserved at the structural level even when their expression may be upregulated in the electric organs of electric fish? 
+
+Although voltage-gated sodium channel protein(s) likely have similar basic functions of moving sodium ions across cell membranes in electric eels, humans, and algae, they likely differ in their sequences across these three species, demonstrating that they are conserved at a functional but not protein-structure level.
+
+Hypothesis: If voltage-gated sodium channel proteins are completely conserved across species, the global and local alignments between electric eel sodium channels and two other non-electric fish species will significantly overlap
+
+---
+Install & Load Packages
+
+```{r, echo=FALSE}
+install.packages("bio3d") ## this package provides tools to run and plot BLAST results
+install.packages("seqinr") ## this is a specialized package for nucleotide sequence management
+
+library(bio3d)
+library(seqinr) 
+```
+
+---
+Download & Read in FASTA Files
+
+```{r, echo=FALSE}
+
+## I was having some trouble making my code work without this strange download-then-reread loophole, so I decided to just keep all of these code lines even though it's all a little bit redundant.
+
+fasta <- get.seq(c("XP_026883236", "KAA8495059", "BAA78033"), 
+                   outfile = "sodiumchannels.fasta", db = "nr", verbose = TRUE)
+
+eel <- get.seq("XP_026883236", outfile = "EEL.fasta", db = "nr", verbose = TRUE)
+algae <- get.seq("KAA8495059", outfile = "ALGAE.fasta", db = "nr", verbose = TRUE)
+human <- get.seq("BAA78033", outfile = "HUMAN.fasta", db = "nr", verbose = TRUE)
+
+        eel_char <- as.character(eel)
+        algae_char <- as.character(algae)
+        human_char <- as.character(human)
+
+eel_file <- read.fasta(file = "EEL.fasta")
+algae_file <- read.fasta(file = "ALGAE.fasta")
+human_file <- read.fasta(file = "HUMAN.fasta")
+        
+eel_file_seq <- eel_file[[1]]
+algae_file_seq <- algae_file[[1]]
+human_file_seq <- human_file[[1]]
+```
+
+---
+Examine Global Alignment with Dot Plot
+
+We see from both the dot plots belowthat there is little to no global alignment of amino acids between electric eels, algae, and human sodium channels, based on diagonal lines that emerge through the dot plot. The eel/algae dot plot shows almost no alignment based on the fact that there is no defined diagonal line, and the eel/human plot shows a slight diagonal which may indicate slight similarities. To establish a baseline, a dot plot was also run on the algae/human combination, and the resulting plot shows almost no sequence similarity once again. 
+
+```{r}
+dotPlot(eel_file_seq, algae_file_seq)
+```
+```{r}
+dotPlot(eel_file_seq, human_file_seq)
+```
+```{r}
+dotPlot(algae_file_seq, human_file_seq)
+```
+
+---
+Understand Local Alignment Hits with BLAST
+
+Using BLAST, we can find out if there are local alignment hits for eel, algae, and human sequences in an existing protein database. This BLAST search queries the UniProt database for sequence alignments for the eel, human, and algae, and plots the resulting alignment values in a graph. 
+
+```{r}
+blast <- blast.pdb(fasta, database = "pdb", time.out = NULL, chain.single=TRUE)
+top_hits <- plot.blast(blast, cutoff=188)
+head(top_hits$hits)
+get.pdb(top_hits)
+```
+
+---
+Analysis & Discussion 
+
+We see that overall, the proteins of sodium channels tend to differ across species at the amino acid level, but have local regions that are similar and likely conserved. In the case of global alignments, it makes sense that the eel and human sodium channels have slightly more in common than the electric eel/algae or human/algae comparisons just based on the fact that electric fish are closer to humans in the established evolutionary tree than they are to algae. In the case of local alignments, the plot shows that there are many similar amino acid sequences of varying lengths, which makes sense as it points to there being some regions within the sodium channels that are constant, and likely work toward the shared function of transporting sodium ions across a membrane. These findings align with other research in the field. For example, Zakon et al., 2006 found that sodium channel proteins themselves may vary between different organisms despite their shared core function of moving ions across a cell membrane. 
